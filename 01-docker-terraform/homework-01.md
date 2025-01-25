@@ -25,7 +25,7 @@ What's the version of `pip` in the image?
 - 23.3.1
 - 23.2.1
 
-### Answer:
+### Solution:
 1. Run this in the terminal `docker run -it --entrypoint=bash python:3.12.8`
 2. Next, run this to check the version `pip --version`
 
@@ -82,23 +82,38 @@ If there are more than one answers, select only one of them
 
 ##  Prepare Postgres
 
-Run Postgres and load data as shown in the videos
-We'll use the green taxi trips from October 2019:
+Run the ingestion for green taxi
 
-```bash
-wget https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz
+```
+URL=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz
+docker run -it \
+    --network=homework-1  \
+    data_ingest:home_work \
+        --user=postgres \
+        --pass=postgres \
+        --host=postgres \
+        --port=5432 \
+        --db=ny_taxi \
+        --table_name=green_taxi_trips \
+        --url=${URL}
 ```
 
-You will also need the dataset with zones:
+Run the ingestion for zones
 
-```bash
-wget https://github.com/DataTalksClub/nyc-tlc-data/releases/download/misc/taxi_zone_lookup.csv
+```
+URL=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/misc/taxi_zone_lookup.csv
+docker run -it \
+    --network=homework-1 \
+    data_ingest:home_work \
+        --user=postgres \
+        --pass=postgres \
+        --host=postgres \
+        --port=5432 \
+        --db=ny_taxi \
+        --table_name=zones \
+        --url=${URL}
 ```
 
-Download this data and put it into Postgres.
-
-You can use the code from the course. It's up to you whether
-you want to use Jupyter or a python script.
 
 ## Question 3. Trip Segmentation Count
 
@@ -117,6 +132,41 @@ Answers:
 - 104,793;  202,661;  109,603;  27,678;  35,189
 - 104,838;  199,013;  109,645;  27,688;  35,202
 
+### Solution:
+Run this query:
+```sql
+SELECT 
+    trip_distance, 
+    COUNT(1)
+FROM (
+    SELECT 
+        CASE 
+            WHEN trip_distance <= 1 THEN 'Up to 1 mile' 
+            WHEN trip_distance > 1 AND trip_distance <= 3 THEN '1-3'
+            WHEN trip_distance > 3 AND trip_distance <= 7 THEN '3-7'
+            WHEN trip_distance > 7 AND trip_distance <= 10 THEN '7-10'
+            WHEN trip_distance > 10 THEN 'Over 10'
+        END as trip_distance
+    FROM green_taxi_trips 
+    WHERE
+        DATE(lpep_dropoff_datetime) >= '2019-10-01' AND 
+        DATE(lpep_dropoff_datetime) < '2019-11-01'
+) AS categorized_trip
+GROUP BY trip_distance;
+```
+Output:
+| trip_distance    | count         | 
+|------------------|---------------|
+| 1-3              | 198924        | 
+| 3-7              | 109603        |
+| 7-10             | 27678         |
+| Over 10          | 35189         |
+| Up to 1 mile     | 104802        |
+
+Answer:
+```
+104,802;  198,924;  109,603;  27,678;  35,189
+```
 
 ## Question 4. Longest trip for each day
 
@@ -130,6 +180,29 @@ Tip: For every day, we only care about one single trip with the longest distance
 - 2019-10-26
 - 2019-10-31
 
+### Solution:
+Run this query
+```sql
+SELECT 
+    DATE(lpep_pickup_datetime) AS pickup_date,
+    trip_distance
+FROM green_taxi_trips
+WHERE trip_distance = (
+    SELECT MAX(trip_distance)
+    FROM green_taxi_trips
+)
+LIMIT 1;
+```
+
+Output:
+| pickup_date    | trip_distance  | 
+|----------------|----------------|
+| 2019-10-31     | 515.89         |
+
+Answer:
+```
+2019-10-31
+```
 
 ## Question 5. Three biggest pickup zones
 
@@ -143,6 +216,37 @@ Consider only `lpep_pickup_datetime` when filtering by date.
 - Morningside Heights, Astoria Park, East Harlem South
 - Bedford, East Harlem North, Astoria Park
 
+### Solution
+Run this query:
+```sql
+SELECT 
+    z."Zone" AS pickup_zone,
+    SUM(g.total_amount) AS total_amount
+FROM 
+    green_taxi_trips AS g
+    JOIN zones AS z 
+    ON g."PULocationID" = z."LocationID"
+WHERE 
+    DATE(g.lpep_pickup_datetime) = '2019-10-18'
+GROUP BY 
+    z."Zone"
+HAVING 
+    SUM(g.total_amount) > 13000
+ORDER BY 
+    total_amount DESC;
+```
+
+Output:
+| pickup_zone            | total_amount         | 
+|------------------------|----------------------|
+| East Harlem North      | 18686.680000000084   | 
+| East Harlem South      | 16797.260000000068   |
+| Morningside Heights    | 13029.790000000028   |
+
+Answer:
+```
+East Harlem North, East Harlem South, Morningside Heights
+```
 
 ## Question 6. Largest tip
 
@@ -159,3 +263,35 @@ We need the name of the zone, not the ID.
 - East Harlem North
 - East Harlem South
 
+### Solution:
+Run this query:
+```sql
+SELECT 
+    z_dropoff."Zone" AS dropoff_zone, 
+    MAX(g.tip_amount) AS max_tip
+FROM 
+    green_taxi_trips AS g
+    JOIN zones AS z_pickup 
+        ON g."PULocationID" = z_pickup."LocationID"
+    JOIN zones AS z_dropoff 
+        ON g."DOLocationID" = z_dropoff."LocationID"
+WHERE 
+    z_pickup."Zone" = 'East Harlem North'
+    AND DATE(g.lpep_pickup_datetime) >= '2019-10-01'
+    AND DATE(g.lpep_pickup_datetime) < '2019-11-01'
+GROUP BY 
+    z_dropoff."Zone"
+ORDER BY 
+    max_tip DESC
+LIMIT 1;
+```
+
+Output:
+| dropoff_zone     | max_tip    | 
+|------------------|------------|
+| JFK Airport      | 87.3       |
+
+Answer:
+```
+JFK Airport
+```
