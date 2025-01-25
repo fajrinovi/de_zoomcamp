@@ -84,7 +84,7 @@ If there are more than one answers, select only one of them
 
 Run the ingestion for green taxi
 
-```
+```bash
 URL=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz
 docker run -it \
     --network=homework-1  \
@@ -100,7 +100,7 @@ docker run -it \
 
 Run the ingestion for zones
 
-```
+```bash
 URL=https://github.com/DataTalksClub/nyc-tlc-data/releases/download/misc/taxi_zone_lookup.csv
 docker run -it \
     --network=homework-1 \
