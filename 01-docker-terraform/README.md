@@ -18,7 +18,7 @@ What's the version of `pip` in the image?
 1. Run this in the terminal `docker run -it --entrypoint=bash python:3.12.8`
 2. Next, run this to check the version `pip --version`
 
-
+![pip version](https://github.com/user-attachments/assets/14fea450-5a01-4a53-918e-99637b5c0a53)
 
 #### Output:
 ```
