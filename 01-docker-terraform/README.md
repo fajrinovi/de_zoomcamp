@@ -69,6 +69,14 @@ volumes:
 
 If there are more than one answers, select only one of them
 
+Solution:
+The PostgreSQL container (named db) listens on port 5432 internally, but it's mapped to port 5433 on local machine. When connecting from pgadmin (which is in the same Docker network), you should use db as the hostname and port 5432. From outside Docker (like local machine), you would use localhost:5433 to connect to PostgreSQL
+
+Answer:
+```
+db:5432
+```
+
 ##  Prepare Postgres
 
 Run the ingestion for green taxi
@@ -283,4 +291,58 @@ Output:
 Answer:
 ```
 JFK Airport
+```
+
+## Terraform
+
+Setting Up
+1. IAM Service Account
+    Download and install [Google Cloud CLI](https://cloud.google.com/sdk/docs/install-sdk) for your platform, following the instructions on the page.
+    On the GCP Console, create a new Service Account with the roles of: Bigquery Admin, Storage Admin, Compute Admin
+    Next, access the created service_account, and create a 'New Key' with Key type: JSON, and save it somewhere safe on your workstation
+    ![service account](https://github.com/user-attachments/assets/990c0823-1ca8-48b0-b3ed-7f1ad6303a03)
+    ![Untitled design](https://github.com/user-attachments/assets/96a8478f-762d-4862-8902-5d85b466f614)
+
+    Now, export the environment variables GOOGLE_APPLICATION_CREDENTIALS pointing to the full path where the .json credentials file was downloaded/saved:
+   ```bash
+   export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
+   ```
+    verify authentification
+   ```bash
+   gcloud auth application-default login 
+   ```
+2. Initialize Terraform:
+    Navigate to the directory with Terraform files, update project details (e.g., bucket name must be unique), and run
+   ```bash
+   terraform init
+   ```
+   ```bash
+   terraform plan //Optional, to check what apply does
+   ```
+   ```bash
+   terraform apply --auto-approve
+   ```
+3. Clean Up Resources:
+  To avoid incurring costs for running services, delete the infrastructure when you’re done
+   ```bash
+    terraform destroy
+   ```
+
+## Question 7. Terraform Workflow
+
+Which of the following sequences, **respectively**, describes the workflow for: 
+1. Downloading the provider plugins and setting up backend,
+2. Generating proposed changes and auto-executing the plan
+3. Remove all resources managed by terraform`
+
+Answers:
+- terraform import, terraform apply -y, terraform destroy
+- teraform init, terraform plan -auto-apply, terraform rm
+- terraform init, terraform run -auto-approve, terraform destroy
+- terraform init, terraform apply -auto-approve, terraform destroy
+- terraform import, terraform apply -y, terraform rm
+
+Answer:
+```
+terraform init, terraform apply -auto-approve, terraform destroy
 ```
