@@ -70,6 +70,7 @@ volumes:
 If there are more than one answers, select only one of them
 
 Solution:
+
 The PostgreSQL container (named db) listens on port 5432 internally, but it's mapped to port 5433 on local machine. When connecting from pgadmin (which is in the same Docker network), you should use db as the hostname and port 5432. From outside Docker (like local machine), you would use localhost:5433 to connect to PostgreSQL
 
 Answer:
