@@ -86,7 +86,7 @@ Answer:
 - 1,925,152
 - 2,561,031
 
-```
+```sql
 SELECT count(*) FROM kestra-demo.yellow_tripdata
 WHERE filename = 'yellow_tripdata_2021-03.csv'
 ```
