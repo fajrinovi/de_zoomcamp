@@ -1,24 +1,24 @@
 ## Module 3 Homework
 
-ATTENTION: At the end of the submission form, you will be required to include a link to your GitHub repository or other public code-hosting site. 
-This repository should contain your code for solving the homework. If your solution includes code that is not in file format (such as SQL queries or 
-shell commands), please include these directly in the README file of your repository.
-
 <b><u>Important Note:</b></u> <p> For this homework we will be using the Yellow Taxi Trip Records for **January 2024 - June 2024 NOT the entire year of data** 
 Parquet Files from the New York
 City Taxi Data found here: </br> https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page </br>
 If you are using orchestration such as Kestra, Mage, Airflow or Prefect etc. do not load the data into Big Query using the orchestrator.</br> 
 Stop with loading the files into a bucket. </br></br>
 
-**Load Script:** You can manually download the parquet files and upload them to your GCS Bucket or you can use the linked script [here](./load_yellow_taxi_data.py):<br>
-You will simply need to generate a Service Account with GCS Admin Priveleges or be authenticated with the Google SDK and update the bucket name in the script to the name of your bucket<br>
-Nothing is fool proof so make sure that all 6 files show in your GCS Bucket before begining.</br><br>
-
 <u>NOTE:</u> You will need to use the PARQUET option files when creating an External Table</br>
 
 <b>BIG QUERY SETUP:</b></br>
+Upload parquet files to the bucket
+![Screenshot 2025-02-12 074009](https://github.com/user-attachments/assets/b3ec1c83-dbfa-42d8-aab8-acf4a0106ecd)
+
 Create an external table using the Yellow Taxi Trip Records. </br>
+![Screenshot 2025-02-11 220115](https://github.com/user-attachments/assets/423c920f-c5ee-462a-a310-a11c95340650)
+
 Create a (regular/materialized) table in BQ using the Yellow Taxi Trip Records (do not partition or cluster this table). </br>
+![Screenshot 2025-02-12 074349](https://github.com/user-attachments/assets/f7880285-3866-4d16-b3b5-793e2d1343f6)
+
+
 </p>
 
 ## Question 1:
@@ -28,6 +28,16 @@ Question 1: What is count of records for the 2024 Yellow Taxi Data?
 - 20,332,093
 - 85,431,289
 
+Solution:
+```sql
+SELECT count(1) FROM `kestra-demo-449917.ny_taxi.external_yellow_tripdata` ;
+```
+![Screenshot 2025-02-12 074921](https://github.com/user-attachments/assets/732b96d8-1ffe-4226-90b6-f6962e67a32b)
+
+Answer:
+```
+20,332,093
+```
 
 ## Question 2:
 Write a query to count the distinct number of PULocationIDs for the entire dataset on both the tables.</br> 
@@ -37,6 +47,14 @@ What is the **estimated amount** of data that will be read when this query is ex
 - 0 MB for the External Table and 155.12 MB for the Materialized Table
 - 2.14 GB for the External Table and 0MB for the Materialized Table
 - 0 MB for the External Table and 0MB for the Materialized Table
+
+Solution:
+External Table:
+![Screenshot 2025-02-12 080135](https://github.com/user-attachments/assets/7bc9e2aa-d925-4ca6-a4b6-636771a49983)
+
+Materialized Table
+![Screenshot 2025-02-12 080047](https://github.com/user-attachments/assets/51bd3ba3-2584-49bf-a873-7158435b9315)
+
 
 ## Question 3:
 Write a query to retrieve the PULocationID from the table (not the external table) in BigQuery. Now write a query to retrieve the PULocationID and DOLocationID on the same table. Why are the estimated number of Bytes different?
