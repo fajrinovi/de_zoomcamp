@@ -8,11 +8,45 @@ For this homework, you will need the following datasets:
 ### Before you start
 
 1. Make sure you, **at least**, have them in GCS with a External Table **OR** a Native Table - use whichever method you prefer to accomplish that (Workflow Orchestration with [pandas-gbq](https://cloud.google.com/bigquery/docs/samples/bigquery-pandas-gbq-to-gbq-simple), [dlt for gcs](https://dlthub.com/docs/dlt-ecosystem/destinations/filesystem), [dlt for BigQuery](https://dlthub.com/docs/dlt-ecosystem/destinations/bigquery), [gsutil](https://cloud.google.com/storage/docs/gsutil), etc)
-2. You should have exactly `7,778,101` records in your Green Taxi table
-3. You should have exactly `109,047,518` records in your Yellow Taxi table
-4. You should have exactly `43,244,696` records in your FHV table
-5. Build the staging models for green/yellow as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/staging/)
-6. Build the dimension/fact for taxi_trips joining with `dim_zones`  as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
+
+```sql
+CREATE OR REPLACE EXTERNAL TABLE `de-zoomcamp-451605.ny_taxi.yellow_tripdata`
+OPTIONS(
+  FORMAT = 'CSV',
+  uris = ['gs://taxi-rides-ny-2019-2020/yellow_tripdata_*.csv']
+)
+
+/* Create partitioned table from external table */
+CREATE OR REPLACE TABLE `de-zoomcamp-451605.ny_taxi.yellow_tripdata_partitioned`
+PARTITION BY DATE(tpep_pickup_datetime) 
+CLUSTER BY VendorID
+AS 
+SELECT *
+FROM `de-zoomcamp-451605.ny_taxi.yellow_tripdata`
+;
+
+CREATE OR REPLACE EXTERNAL TABLE `de-zoomcamp-451605.ny_taxi.green_tripdata`
+OPTIONS(
+  FORMAT = 'CSV',
+  uris = ['gs://taxi-rides-ny-2019-2020/green_tripdata_*.csv']
+)
+
+/* Create partitioned table from external table */
+CREATE OR REPLACE TABLE `de-zoomcamp-451605.ny_taxi.green_tripdata_partitioned`
+PARTITION BY DATE(lpep_pickup_datetime) 
+CLUSTER BY VendorID
+AS 
+SELECT *
+FROM `de-zoomcamp-451605.ny_taxi.green_tripdata`
+;
+```
+
+
+3. You should have exactly `7,778,101` records in your Green Taxi table
+4. You should have exactly `109,047,518` records in your Yellow Taxi table
+5. You should have exactly `43,244,696` records in your FHV table
+6. Build the staging models for green/yellow as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/staging/)
+7. Build the dimension/fact for taxi_trips joining with `dim_zones`  as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
 
 **Note**: If you don't have access to GCP, you can spin up a local Postgres instance and ingest the datasets above
 
