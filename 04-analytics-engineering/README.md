@@ -93,9 +93,15 @@ Sources in dbt: The source reference `{{ source('raw_nyc_tripdata', 'ext_green_t
 
 where:
 
+```
 {database} → {{ env_var('DBT_BIGQUERY_PROJECT', 'dtc_zoomcamp_2025') }} → myproject
+```
+```
 {schema} → {{ env_var('DBT_BIGQUERY_SOURCE_DATASET', 'raw_nyc_tripdata') }} → my_nyc_tripdata
+```
+```
 {table} → ext_green_taxi
+```
 
 Answer:
 ```sql
@@ -123,12 +129,21 @@ What would you change to accomplish that in a such way that command line argumen
 - Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY`
 - Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", var("days_back", "30")) }}' DAY`
 
+Answer:
+```
+Update the WHERE clause to pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY
+```
+
+- var("days_back", env_var("DAYS_BACK", "30")):
+- var("days_back") → First, it checks if a variable is passed via command-line (--vars '{"days_back": 7}').
+- env_var("DAYS_BACK", "30") → If no command-line argument is provided, it falls back to an environment variable (DAYS_BACK).
+Default (30) → If neither is provided, it defaults to 30
 
 ### Question 3: dbt Data Lineage and Execution
 
 Considering the data lineage below **and** that taxi_zone_lookup is the **only** materialization build (from a .csv seed file):
 
-![image](./homework_q2.png)
+<img width="1365" alt="homework_q2" src="https://github.com/user-attachments/assets/0bcdc78c-09dc-466b-879d-256ac325f48e" />
 
 Select the option that does **NOT** apply for materializing `fct_taxi_monthly_zone_revenue`:
 
@@ -138,6 +153,13 @@ Select the option that does **NOT** apply for materializing `fct_taxi_monthly_zo
 - `dbt run --select +models/core/`
 - `dbt run --select models/staging/+`
 
+Answer:
+The option that does NOT apply for materializing fct_taxi_monthly_zone_revenue is:
+```
+dbt run --select models/staging/+
+```
+
+dbt run --select models/staging/+ only runs staging models and their dependencies but does not run fct_taxi_monthly_zone_revenue, which belongs to the core or marts layer.
 
 ### Question 4: dbt Macros and Jinja
 
