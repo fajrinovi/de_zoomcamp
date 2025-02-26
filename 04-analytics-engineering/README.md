@@ -84,6 +84,23 @@ from {{ source('raw_nyc_tripdata', 'ext_green_taxi' ) }}
 - `select * from myproject.my_nyc_tripdata.ext_green_taxi`
 - `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.green_taxi`
 
+Solution:
+
+Sources in dbt: The source reference `{{ source('raw_nyc_tripdata', 'ext_green_taxi') }}` resolves to:
+```pgsql
+{database}.{schema}.{table}
+```
+
+where:
+
+{database} → {{ env_var('DBT_BIGQUERY_PROJECT', 'dtc_zoomcamp_2025') }} → myproject
+{schema} → {{ env_var('DBT_BIGQUERY_SOURCE_DATASET', 'raw_nyc_tripdata') }} → my_nyc_tripdata
+{table} → ext_green_taxi
+
+Answer:
+```sql
+select * from myproject.my_nyc_tripdata.ext_green_taxi
+```
 
 ### Question 2: dbt Variables & Dynamic Models
 
