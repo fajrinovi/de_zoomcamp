@@ -200,13 +200,13 @@ That all being said, regarding macro above, **select all statements that are tru
 
 
 Answer:
-✅ 1. Setting a value for `DBT_BIGQUERY_TARGET_DATASET` env var is mandatory, or it'll fail to compile
-✅ 3. When using core, it materializes in the dataset defined in `DBT_BIGQUERY_TARGET_DATASET`
-✅ 4. When using stg, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
-✅ 5. When using staging, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
+- ✅ 1. Setting a value for `DBT_BIGQUERY_TARGET_DATASET` env var is mandatory, or it'll fail to compile
+- ✅ 3. When using core, it materializes in the dataset defined in `DBT_BIGQUERY_TARGET_DATASET`
+- ✅ 4. When using stg, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
+- ✅ 5. When using staging, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
 
 This statement is false:
-❌ 2. Setting a value for `DBT_BIGQUERY_STAGING_DATASET` env var is mandatory, or it'll fail to compile (Karena kalau nggak ada, default-nya ke `DBT_BIGQUERY_TARGET_DATASET`).
+- ❌ 2. Setting a value for `DBT_BIGQUERY_STAGING_DATASET` env var is mandatory, or it'll fail to compile (Karena kalau nggak ada, default-nya ke `DBT_BIGQUERY_TARGET_DATASET`).
 
 ## Serious SQL
 
