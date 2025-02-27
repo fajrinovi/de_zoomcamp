@@ -2,12 +2,13 @@ version: 2
 
 sources:
   - name: staging
-    database: "{{ env_var('DBT_DATABASE', 'taxi-rides-ny-339813-412521') }}"
-    schema: "{{ env_var('DBT_SCHEMA', 'trips_data_all') }}"
+    database: "{{ env_var('DBT_DATABASE', 'de-zoomcamp-451605') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'ny_taxi') }}"
       # loaded_at_field: record_loaded_at
     tables:
       - name: green_tripdata
       - name: yellow_tripdata
+      - name: fhv_tripdata_partitioned
          # freshness:
            # error_after: {count: 6, period: hour}
 
@@ -194,3 +195,56 @@ models:
             description: Total amount of all tolls paid in trip.
           - name: Total_amount 
             description: The total amount charged to passengers. Does not include cash tips.
+
+    - name: stg_fhv_tripdata
+      description: ""
+      columns:
+        - name: tripid
+          data_type: string
+          description: ""
+          tests:
+            - unique:
+                severity: warn
+            - not_null:
+                severity: warn
+
+        - name: dispatching_base_num
+          data_type: string
+          description: ""
+          tests:
+            - not_null:
+                severity: warn
+
+        - name: pickup_locationid
+          data_type: int64
+          description: ""
+          tests:
+            - relationships:
+                field: locationid
+                to: ref('taxi_zone_lookup')
+                severity: warn
+
+        - name: dropoff_locationid
+          data_type: int64
+          description: ""
+          tests:
+            - relationships:
+                field: locationid
+                to: ref('taxi_zone_lookup')
+                severity: warn
+
+        - name: affiliated_base_number
+          data_type: string
+          description: ""
+
+        - name: pickup_datetime
+          data_type: timestamp
+          description: ""
+
+        - name: dropoff_datetime
+          data_type: timestamp
+          description: ""
+
+        - name: sr_flag
+          data_type: int64
+          description: ""
