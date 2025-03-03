@@ -92,9 +92,3 @@ Using the zone lookup data and the FHV October 2019 data, what is the name of th
 - Jamaica Bay
 - Union Sq
 - Crown Heights North
-
-
-## Submitting the solutions
-
-- Form for submitting: https://courses.datatalks.club/de-zoomcamp-2024/homework/hw5
-- Deadline: See the website
