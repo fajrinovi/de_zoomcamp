@@ -1,90 +1,190 @@
-# Module 6: Stream Processing
+# Homework
 
-## Practical part: PyFlink
+In this homework, we're going to learn about streaming with PyFlink.
 
-In this video, we show how to use PyFlink to consume data 
-from a Kafka stream
+Instead of Kafka, we will use Red Panda, which is a drop-in
+replacement for Kafka. It implements the same interface, 
+so we can use the Kafka library for Python for communicating
+with it, as well as use the Kafka connector in PyFlink.
 
-[![](https://markdown-videos-api.jorgenkh.no/youtube/P2loELMUUeI)](https://youtu.be/P2loELMUUeI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=51)
-
-
-* Code: [PyFlink examples](pyflink/)
-* [2025 Homework](../cohorts/2025/06-streaming/homework.md)
-
-
-## Theoretical part: Kafka + Java (optional)
-
-In this set of videos, we cover Kafka and give examples in Java
-
-Code: [Java examples](java/)
+For this homework we will be using the Taxi data:
+- Green 2019-10 data from [here](https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-10.csv.gz)
 
 
-### Stream processing
+## Setup
 
-- [:movie_camera: 6.0.1 Introduction](https://youtu.be/hfvju3iOIP0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=67)
-- [:movie_camera: 6.0.2 What is stream processing](https://youtu.be/WxTxKGcfA-k&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=68)
-- [:movie_camera: 6.3  What is kafka?](https://youtu.be/zPLZUDPi4AY&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=69)
-- [:movie_camera: 6.4 Confluent cloud](https://youtu.be/ZnEZFEYKppw&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=70)
-- [:movie_camera: 6.5 Kafka producer consumer](https://youtu.be/aegTuyxX7Yg&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=71)
-- [:movie_camera: 6.6 Kafka configuration](https://youtu.be/SXQtWyRpMKs&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=72)
+We need:
 
-Links:
+- Red Panda
+- Flink Job Manager
+- Flink Task Manager
+- Postgres
 
-- [Slides](https://docs.google.com/presentation/d/1bCtdCba8v1HxJ_uMm9pwjRUC-NAMeB-6nOG2ng3KujA/edit?usp=sharing)
-- [Kafka Configuration Reference](https://docs.confluent.io/platform/current/installation/configuration/)
-- [Confluent cloud trial](https://www.confluent.io/confluent-cloud/tryfree/)
+It's the same setup as in the [pyflink module](../../../06-streaming/pyflink/), so go there and start docker-compose:
 
-### Kafka Streams
+```bash
+cd ../../../06-streaming/pyflink/
+docker-compose up
+```
 
-- [:movie_camera: 6.7 Kafka stream basics](https://youtu.be/dUyA_63eRb0&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=73)
-- [:movie_camera: 6.8 Kafka stream join](https://youtu.be/NcpKlujh34Y&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=74)
-- [:movie_camera: 6.9 Kafka stream testing](https://youtu.be/TNx5rmLY8Pk&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=75)
-- [:movie_camera: 6.10 Kafka stream windowing](https://youtu.be/r1OuLdwxbRc&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=76)
-- [:movie_camera: 6.11 Kafka ksqldb & Connect](https://youtu.be/DziQ4a4tn9Y&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=77)
-- [:movie_camera: 6.12 Kafka Schema registry](https://youtu.be/tBY_hBuyzwI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=78)
+(Add `-d` if you want to run in detached mode)
 
-Links:
+Visit http://localhost:8081 to see the Flink Job Manager
 
-- [Slides](https://docs.google.com/presentation/d/1fVi9sFa7fL2ZW3ynS5MAZm0bRSZ4jO10fymPmrfTUjE/edit?usp=sharing)  
-- [Streams Concepts](https://docs.confluent.io/platform/current/streams/concepts.html)
+Connect to Postgres with pgcli, pg-admin, [DBeaver](https://dbeaver.io/) or any other tool.
+
+The connection credentials are:
+
+- Username `postgres`
+- Password `postgres`
+- Database `postgres`
+- Host `localhost`
+- Port `5432`
+
+With pgcli, you'll need to run this to connect:
+
+```bash
+pgcli -h localhost -p 5432 -u postgres -d postgres
+```
+
+Run these query to create the Postgres landing zone for the first events and windows:
+
+```sql 
+CREATE TABLE processed_events (
+    test_data INTEGER,
+    event_timestamp TIMESTAMP
+);
+
+CREATE TABLE processed_events_aggregated (
+    event_hour TIMESTAMP,
+    test_data INTEGER,
+    num_hits INTEGER 
+);
+```
+
+## Question 1: Redpanda version
+
+What's the version, based on the output of the command you executed? (copy the entire version):
+
+- Run command `docker exec redpanda-1 rpk --version` to get the redpanda version
+
+#### Answer:
+```
+v24.2.18
+```
+
+## Question 2. Creating a topic
+
+Before we can send data to the redpanda server, we
+need to create a topic. We do it also with the `rpk`
+command we used previously for figuring out the version of 
+redpandas.
+
+Read the output of `help` and based on it, create a topic with name `green-trips` 
+- create green-trip topic in redpanda docker exec redpanda-1 rpk topic create greenTaxi-10-2019-topic
+
+What's the output of the command for creating a topic? Include the entire output in your answer.
+
+#### Answer:
+```
+TOPIC                    STATUS
+greenTaxi-10-2019-topic  OK
+```
+
+## Question 3. Connecting to the Kafka server
+
+We need to make sure we can connect to the server, so
+later we can send some data to its topics
+
+First, let's install the kafka connector (up to you if you
+want to have a separate virtual environment for that)
+
+```bash
+pip install kafka-python
+```
+
+You can start a jupyter notebook in your solution folder or
+create a script
+
+Let's try to connect to our server:
+
+```python
+import json
+
+from kafka import KafkaProducer
+
+def json_serializer(data):
+    return json.dumps(data).encode('utf-8')
+
+server = 'localhost:9092'
+
+producer = KafkaProducer(
+    bootstrap_servers=[server],
+    value_serializer=json_serializer
+)
+
+producer.bootstrap_connected()
+```
+
+Provided that you can connect to the server, what's the output
+of the last command?
+
+#### Answer:
+```
+True
+```
+
+## Question 4: Sending the Trip Data
+
+Now we need to send the data to the `green-trips` topic
+
+Read the data, and keep only these columns:
+
+* `'lpep_pickup_datetime',`
+* `'lpep_dropoff_datetime',`
+* `'PULocationID',`
+* `'DOLocationID',`
+* `'passenger_count',`
+* `'trip_distance',`
+* `'tip_amount'`
+
+Now send all the data using this code:
+
+```python
+producer.send(topic_name, value=message)
+```
+
+For each row (`message`) in the dataset. In this case, `message`
+is a dictionary.
+
+After sending all the messages, flush the data:
+
+```python
+producer.flush()
+```
+
+Use `from time import time` to see the total time 
+
+```python
+from time import time
+
+t0 = time()
+
+# ... your code
+
+t1 = time()
+took = t1 - t0
+```
+
+How much time did it take to send the entire dataset and flush? 
 
 
-### PySpark - Structured Streaming (optional)
+## Question 5: Build a Sessionization Window (2 points)
 
-Code: [Python examples](python/)
+Now we have the data in the Kafka stream. It's time to process it.
 
-Please follow the steps described under [pyspark-streaming](python/streams-example/pyspark/README.md)
-
-- [:movie_camera: 6.13 Kafka Streaming with Python](https://youtu.be/BgAlVknDFlQ&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=79)
-- [:movie_camera: 6.14 Pyspark Structured Streaming](https://youtu.be/VIVr7KwRQmE&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=80)
-
-
-## Other streaming resources
-
-Kafka Streams with JVM library
-
-- [Confluent Kafka Streams](https://kafka.apache.org/documentation/streams/)
-- [Scala Example](https://github.com/AnkushKhanna/kafka-helper/tree/master/src/main/scala/kafka/schematest)
-
-KSQL and ksqlDB
-
-- [Introducing KSQL: Streaming SQL for Apache Kafka](https://www.confluent.io/blog/ksql-streaming-sql-for-apache-kafka/)
-- [ksqlDB](https://ksqldb.io/)
-
-Kafka Connect
-
-- [Making Sense of Stream Data](https://medium.com/analytics-vidhya/making-sense-of-stream-data-b74c1252a8f5)
-
-
-
-## Community notes
-
-Did you take notes? You can share them here.
-
-* [Notes by Alvaro Navas](https://github.com/ziritrion/dataeng-zoomcamp/blob/main/notes/6_streaming.md )
-* [Marcos Torregrosa's blog (spanish)](https://www.n4gash.com/2023/data-engineering-zoomcamp-semana-6-stream-processing/)
-* [Notes by Oscar Garcia](https://github.com/ozkary/Data-Engineering-Bootcamp/tree/main/Step6-Streaming)
-* [2024 videos transcript](https://drive.google.com/drive/folders/1UngeL5FM-GcDLM7QYaDTKb3jIS6CQC14?usp=drive_link) by Maria Fisher 
-* [Notes by Shayan Shafiee Moghadam](https://github.com/shayansm2/eng-notebook/blob/main/kafka/readme.md)
-* Add your notes here (above this line)
-
+* Copy `aggregation_job.py` and rename it to `session_job.py`
+* Have it read from `green-trips` fixing the schema
+* Use a [session window](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/operators/windows/) with a gap of 5 minutes
+* Use `lpep_dropoff_datetime` time as your watermark with a 5 second tolerance
+* Which pickup and drop off locations have the longest unbroken streak of taxi trips?
